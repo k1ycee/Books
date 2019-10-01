@@ -10,20 +10,26 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.URL;
+import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
     private ProgressBar bkpb;
+    TextView scr;
+    TextView err;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         bkpb = findViewById(R.id.bk_loading);
+       scr = (TextView) findViewById(R.id.srh_result);
+        err = (TextView) findViewById(R.id.bk_error);
 
         try{
             URL bookUrl = ApiUtil.buildUrl("cooking");
-            new Bookquery().execute(bookUrl);
+            new Bookquery(this).execute(bookUrl);
 
         }
         catch (Exception e){
@@ -31,7 +37,16 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public class Bookquery extends AsyncTask<URL , Void , String>{
+    static class Bookquery extends AsyncTask<URL , Integer , String>{
+        private WeakReference<MainActivity> mainActivityWeakReference;
+        public Bookquery(MainActivity mainActivity) {
+            this.mainActivityWeakReference = new WeakReference<>(mainActivity);
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            Log.d("TAG", Arrays.toString(values) + "");
+        }
 
         @Override
         protected String doInBackground(URL... urls) {
@@ -48,27 +63,30 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String result) {
+            if(mainActivityWeakReference == null) return;
+            MainActivity mainActivity = mainActivityWeakReference.get();
 
-            TextView scr = (TextView) findViewById(R.id.srh_result);
-            TextView err = (TextView) findViewById(R.id.bk_error);
-            bkpb.setVisibility(View.INVISIBLE);
+            mainActivity.bkpb.setVisibility(View.INVISIBLE);
 
             if (result == null){
-                scr.setVisibility(View.INVISIBLE);
-                err.setVisibility(View.VISIBLE);
+                mainActivity.scr.setVisibility(View.INVISIBLE);
+                mainActivity.err.setVisibility(View.VISIBLE);
             }else{
-                scr.setVisibility(View.VISIBLE);
-                err.setVisibility(View.INVISIBLE);
+                mainActivity.scr.setVisibility(View.VISIBLE);
+                mainActivity.err.setVisibility(View.INVISIBLE);
             }
 
-            scr.setText(result);
+            mainActivity.scr.setText(result);
 
         }
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            bkpb.setVisibility(View.VISIBLE);
+            if(mainActivityWeakReference == null) return;
+            MainActivity mainActivity = mainActivityWeakReference.get();
+
+            mainActivity.bkpb.setVisibility(View.VISIBLE);
         }
     }
 }
