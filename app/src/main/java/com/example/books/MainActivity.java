@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     private ProgressBar bkpb;
@@ -31,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public class Bookquery extends AsyncTask<URL , Void , String>{
+        public class Bookquery extends AsyncTask<URL , Void , String>{
 
         @Override
         protected String doInBackground(URL... urls) {
@@ -49,8 +50,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String result) {
 
-            TextView scr = (TextView) findViewById(R.id.srh_result);
-            TextView err = (TextView) findViewById(R.id.bk_error);
+            TextView scr =  findViewById(R.id.srh_result);
+            TextView err =  findViewById(R.id.bk_error);
             bkpb.setVisibility(View.INVISIBLE);
 
             if (result == null){
@@ -60,8 +61,12 @@ public class MainActivity extends AppCompatActivity {
                 scr.setVisibility(View.VISIBLE);
                 err.setVisibility(View.INVISIBLE);
             }
-
-            scr.setText(result);
+            ArrayList<Book> bks = ApiUtil.getBookJson(result);
+            StringBuilder resultstring = new StringBuilder();
+            for (Book bk : bks){
+                resultstring.append(bk.title).append("\n").append(bk.publishdate).append("\n\n");
+            }
+            scr.setText(resultstring.toString());
 
         }
 

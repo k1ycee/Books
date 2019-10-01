@@ -3,11 +3,17 @@ package com.example.books;
 import android.net.Uri;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Scanner;
+
 
 public class ApiUtil {
     private ApiUtil(){}
@@ -58,6 +64,51 @@ public class ApiUtil {
         finally {
             connect.disconnect();
         }
+
+    }
+
+    public static ArrayList<Book> getBookJson(String json){
+
+        final String ID = "id";
+        final String TITLE = "title";
+        final String SUBTITLE = "subtitle";
+        final String AUTHORS = "authors";
+        final String PUBLISHER = "publisher";
+        final String PUBLISHED_DATE = "published date";
+        final String ITEMS = "items";
+        final String VOLUMEINFO = "volumeinfo";
+
+        ArrayList<Book> books = new ArrayList<>();
+
+        try{
+            JSONObject jbooks = new JSONObject(json);
+            JSONArray abooks = jbooks.getJSONArray(ITEMS);
+            int numberofbooks = abooks.length();
+
+            for (int i=0; i<numberofbooks;i++){
+                JSONObject booksj = abooks.getJSONObject(i);
+                JSONObject volumeInfoJ =
+                        booksj.getJSONObject(VOLUMEINFO);
+                int authorNum = volumeInfoJ.getJSONArray(AUTHORS).length();
+                String[] authors = new String[authorNum];
+                for (int j=0; j<authorNum; j++){
+                    authors[j] = volumeInfoJ.getJSONArray(AUTHORS).get(j).toString();
+                }
+                Book book = new Book(
+                        booksj.getString(ID),
+                        volumeInfoJ.getString(TITLE),
+                        (volumeInfoJ.isNull(SUBTITLE)?"":volumeInfoJ.getString(SUBTITLE)),
+                        authors,
+                        volumeInfoJ.getString(PUBLISHER),
+                        volumeInfoJ.getString(PUBLISHED_DATE));
+                books.add(book);
+            }
+        }
+        catch (JSONException e){
+            e.printStackTrace();
+        }
+
+        return books;
 
     }
 }
